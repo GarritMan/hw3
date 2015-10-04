@@ -41,7 +41,8 @@ typedef struct s_block {
     //program more cross platform since sizeof can be used.
     //void *ptr;
     /* A pointer to the allocated block */
-    //char data;
+    //char data[0];
+    
  }s_block;
 
 
