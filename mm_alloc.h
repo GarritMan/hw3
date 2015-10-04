@@ -15,8 +15,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
+#include <unistd.h>
 #include <stdlib.h>
+
+
 
 void* mm_malloc(size_t size);
 void* mm_realloc(void* ptr, size_t size);
@@ -24,17 +26,24 @@ void mm_free(void* ptr);
 
 
 typedef struct s_block *s_block_ptr;
+extern s_block_ptr HeadPtr;
 
 /* block struct */
-struct s_block {
-    size_t size;
-    struct s_block *next;
-    struct s_block *prev;
-    int free;
-    void *ptr;
+typedef struct s_block {
+    size_t size; //8 bytes
+    struct s_block *next; //8bytes
+    struct s_block *prev; //8bytes
+    int free; //4 bytes
+    void *block; //8bytes
+    
+    //There will padding here of 4 bytes (on my 64 bit machine), but I like this method even though it wastes 4
+    //bytes because it makes the 
+    //program more cross platform since sizeof can be used.
+    //void *ptr;
     /* A pointer to the allocated block */
-    char data [0];
- };
+    //char data;
+ }s_block;
+
 
 /* Split block according to size, b must exist */
 void split_block (s_block_ptr b, size_t s);
