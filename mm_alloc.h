@@ -60,6 +60,10 @@ s_block_ptr get_block (void *p);
  */
 s_block_ptr extend_heap (s_block_ptr last , size_t s);
 
+/* Copy info and contents of block from one location to another.
+ * returns ptr to new block if successful or NULL otherwise
+ */
+void* mem_copy(s_block_ptr oldB, s_block_ptr newB);
 
 #ifdef __cplusplus
 }

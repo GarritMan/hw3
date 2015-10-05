@@ -1,8 +1,10 @@
 /*
  * mm_alloc.c
  *
- * Stub implementations of the mm_* routines. Remove this comment and provide
- * a summary of your allocator's design here.
+ * Stub implementations of the mm_* routines. 
+ * 
+ * 
+ * 
  */
 
 #include "mm_alloc.h"
@@ -10,7 +12,7 @@
 #include <stdlib.h>
 
 /* Your final implementation should comment out this macro. */
-#define MM_USE_STUBS
+//#define MM_USE_STUBS
 
 s_block_ptr HeadPtr=NULL;
 
@@ -54,13 +56,16 @@ s_block_ptr get_block (void *p){
 }
 
 s_block_ptr fusion(s_block_ptr b){
-	if((b->next)->free==1){
+	if( (b->next)->free ==1 ){
 		b->size=b->size+sizeof(s_block)+(b->next)->size;
 		b->next=(b->next)->next;
-		
+		(b->next)->prev=b;
 	}
-	if((b->prev)->free==1){
+	
+	if( (b->prev)->free ==1 ){
+		
 		(b->prev)->next=b->next;
+		(b->next)->prev=b->prev;
 		(b->prev)->free=b->free;
 		(b->prev)->size=(b->prev)->size + sizeof(s_block) + b->size;
 		
@@ -71,7 +76,38 @@ s_block_ptr fusion(s_block_ptr b){
 }
 
 void split_block (s_block_ptr b, size_t s){
+	if(b && s >= sizeof(void *)){
+		if(  b->size - s  >= sizeof(s_block) + sizeof(void*) ){
+			s_block_ptr newP = (s_block_ptr) (b->block + s);
+			newP->next = b->next;
+			(newP->next)->prev=newP;
+			b->next=newP;
+			newP->prev=b;
+			newP->size=b->size - s - sizeof(s_block);
+			b->size = s;
+			newP->block= b->block + s + sizeof(s_block);
+			
+			mm_free(newP->block);
+			
+		}
+	}
+}
+
+
+void* mem_copy(s_block_ptr oldB, s_block_ptr newB){
+	if( oldB && newB){
+		char * oStart= (char *) oldB->block;
+		char * nStart=(char *) newB->block;
+		int i;
+		for(i=0;i<oldB->size;i++){
+			*(nStart + i)=*(oStart + i);
+		}
+		
+		return newB->block;
+		
+	}
 	
+	return NULL;
 }
 
 
@@ -82,12 +118,12 @@ void* mm_malloc(size_t size){
 	//printf("in malloc 2\n");
 	while(head){
 		//printf("in malloc 3\n");
+		//printf("round\n");
 		if(head->free==1 && head->size >=size){
-			
+			mm_realloc(head->block,size);
 			head->free=0;
 			return head->block;
-			//do Something
-			return NULL;
+			
 		}else{
 			prev=head;
 			head=head->next;
@@ -103,13 +139,36 @@ void* mm_malloc(size_t size){
 	
 }
 
+/*mm_realloc:
+ * If want bigger space then acts the same as malloc but copies over contents of old block to a new, more
+ * approproate block.
+ * If smaller block is needed but current block isnt big enough to split into two viable blocks, then nothing is
+ * done.
+ * If current clock is big enough then the block is split accordingly
+ */
 void* mm_realloc(void* ptr, size_t size){
-	
-#ifdef MM_USE_STUBS
-    return realloc(ptr, size);
-#else
-#error Not implemented.
-#endif
+		s_block_ptr curr=get_block(ptr);
+		
+		if(curr){
+			if(size > curr->size){
+				void* p=mm_malloc(size);
+				s_block_ptr newP=get_block(p);
+				if(newP){
+					p=mem_copy(curr,newP);
+					mm_free(curr->block);
+					return p;
+				}
+				
+				
+					
+			}else if(size < curr->size){
+				split_block(curr,size);
+				return curr->block;
+			}else{
+				return curr->block;
+			}
+		}
+		return NULL;
 }
 
 void mm_free(void* ptr){
