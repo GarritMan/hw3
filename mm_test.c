@@ -57,20 +57,9 @@ int main(int argc, char **argv)
     
     mem_visualiser();
     
-    //*data1 = 1;
-   	
-   	//data2="hello, How much wood could a wood chuck\n chuck if a wood chuck coud chuck wood?\n";
-   	
-   	//*data3=10;
-   	
-   	//printf("data1:%d ,data2:%s ,data3:%d \n",*data1,data2,*data3);
+    
    	
     printf("\n\nmalloc sanity test successful!\n");
-    //void *pt=sbrk(0);
-    //void *pt2=sbrk(1);
-    //char a=*((char*) (pt+4095));
-    //printf("success\n");
-    //printf("sbrk ptr: %p\n",((char *)(sbrk(0))));
-    //printf("sbrk ptr: %c\n",*((char *)(sbrk(1)+4094)));
+   
     return 0;
 }
