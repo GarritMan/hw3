@@ -3,7 +3,30 @@
  *
  * Stub implementations of the mm_* routines. 
  * 
+ * The Design of this memory allocator is in essence a first fit model. However there are some twists.
  * 
+ * The general routine is as follows:
+ * 
+ * 1. The user asks for some memory by calling mm_malloc(size). If this is the first time memory is being asked
+ * for then extend_heap is called and the memory is given with the exact asked for size. If it is not the first 
+ * time, then mm_malloc will search through the linked list of previously allocated memory blocks. If it finds a 
+ * block that is free and big enough for what the user wants, then is will attempt to split the block. If the 
+ * block is not big enough as is to provide a reasonable free portion once split (this means enough space for the
+ * struct data and atleast one words length of space for user data) then the block is given to the user as is even
+ * if it is bigger than what was asked for). If mm_malloc cannot find an appropriate free block, then it will 
+ * extend the heap.
+ * 
+ * 2. When the user frees a block, the mm_free function will find the block corresponding to the pointer given
+ * and when it finds it; if it is the very last block that was allocated, then it will release the block back to
+ * the operating system by pushing back the heap break pointer. If is not the last block allocated, then is will 
+ * free the block and it will look at the block before , and after it's self and if either or both of those are
+ * it will merge them into one big free block.
+ * 
+ * 3. When the user asks to reallocate a previously allocated memory block; if they want to increase its size, then
+ * a new block is allocated that is the appropriate size and the old block is freed and its contents copied to the 
+ * new block. If they want to decrease size and the size as is, is big enough to split the the block effectively 
+ * then it will split the block and return the correct size block. If the block is not big enough to split, then
+ *  it is given back to the user as is.
  * 
  */
 
@@ -43,7 +66,7 @@ s_block_ptr extend_heap (s_block_ptr last , size_t s){
 
 s_block_ptr get_block (void *p){
 	s_block_ptr head=HeadPtr;
-	//printf("in get_block\n");
+	
 	while(head){
 		if(head->block==p){
 			return head;
@@ -112,13 +135,11 @@ void* mem_copy(s_block_ptr oldB, s_block_ptr newB){
 
 
 void* mm_malloc(size_t size){
-	//printf("in malloc 1\n");
+	
 	s_block_ptr head=HeadPtr;
 	s_block_ptr prev=NULL;
-	//printf("in malloc 2\n");
+	
 	while(head){
-		//printf("in malloc 3\n");
-		//printf("round\n");
 		if(head->free==1 && head->size >=size){
 			mm_realloc(head->block,size);
 			head->free=0;
@@ -173,20 +194,20 @@ void* mm_realloc(void* ptr, size_t size){
 
 void mm_free(void* ptr){
 	s_block_ptr curr=get_block(ptr);
-	//printf("in free 1\n");
+	
 	if(curr){
 		if(curr->next==NULL){
-			//printf("in free 2\n");
+			
 			if(curr->prev){
-				//printf("in free 4\n");
+				
 				(curr->prev)->next=NULL;
 			}else{
 				HeadPtr=NULL;
 			}
-			//printf("in free 5\n");
+			
 			sbrk(-(curr->size + sizeof(s_block)));
 		}else{
-			//printf("in free 3\n");
+			
 			curr->free=1;
 			fusion(curr);
 		}
